@@ -28,7 +28,9 @@
    Run the playbooks from the within the directory that contains these .yml and hosts file.
 
    $ ansible-playbook -i hosts kube-dependencies.yml
+
    $ ansible-playbook -i hosts master.yml
+
    $ ansible-playbook -i hosts workers.yml
 
 
