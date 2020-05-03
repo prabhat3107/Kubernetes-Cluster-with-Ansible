@@ -1,0 +1,71 @@
+- hosts: all
+  become: yes
+  tasks:
+      - name: Install aptitude using apt
+        apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+      - name: Add Docker official GPG key
+        apt_key:
+          state: present
+          keyserver: 'https://download.docker.com/linux/{{ansible_distribution|lower}}/gpg'
+          id: 7EA0A9C3F273FCD8
+
+      - name: check Docker apt key has not been altered
+        command: apt-key fingerprint 0EBFCD88
+        register: fingerprint_check
+        changed_when: False
+        failed_when: "'9DC8 5822 9FC7 DD38 854A  E2D8 8D81 803C 0EBF CD88' not in fingerprint_check.stdout"
+
+      - name: Install required system packages
+        apt: name={{ item }} state=latest update_cache=yes
+        loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+      - name: Add Docker APT repository
+        apt_repository:
+          repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
+          state: present
+
+      - name: Update apt and install docker-ce
+        apt: update_cache=yes name=docker-ce state=latest
+
+      - name: Update apt and install docker-ce-cli
+        apt: update_cache=yes name=docker-ce-cli state=latest
+
+      - name: Update apt and install containerd.io
+        apt: update_cache=yes name=containerd.io state=latest
+
+
+      - name: Install Docker Module for Python
+        pip:
+          name: docker
+
+      - name: add Kubernetes apt-key
+        apt_key:
+          url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+          state: present
+
+      - name: add Kubernetes' APT repository
+        apt_repository:
+         repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+         state: present
+         filename: 'kubernetes'
+
+      - name: install kubelet
+        apt:
+          name: kubelet=1.14.0-00
+          state: present
+          update_cache: true
+
+      - name: install kubeadm
+        apt:
+          name: kubeadm=1.14.0-00
+          state: present
+
+- hosts: master
+  become: yes
+  tasks:
+      - name: install kubectl
+        apt:
+          name: kubectl=1.14.0-00
+          state: present
+          force: yes
